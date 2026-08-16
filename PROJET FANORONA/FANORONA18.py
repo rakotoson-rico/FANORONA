@@ -35,8 +35,8 @@ rayon_pions = 25  # hicalculena anz isikin miova dimension
 image_fond = None
 image_fond_originale = None
 btn_apody = None  # nampiana : ny objet button APODY, tsy azo avadika isaky ny redessin
-btn_miverina = None  # nampiana : ny objet button MIVERINA, mba hiverina any @menu na amin'ny lalao
-btn_vaovao = None  # nampiana : ny objet button VAOVAO, mba hanomboka lalao vaovao indray
+btn_miverina = None  
+btn_vaovao = None  
 
 
 def dessin_pion(canvas, x, y, rayon, couleur, selectionne=False):
@@ -211,8 +211,6 @@ def dessin_plateau(event=None):
                 x, y = position((colonne, ligne))
                 dessin_pion(canvas, x, y, rayon_pions, couleur, (colonne, ligne) == pion_selectionne)
 
-    # nampiana : mametraka ny bouton MIVERINA, VAOVAO ary APODY eo AMBANY (bas) foana, mifanila,
-    # na inona na inona dimension'ny fenetra ; averina eto isaky ny redessin satria nofafan'ny canvas.delete("all")
     if btn_miverina is not None:
         canvas.create_window(
             largeur / 2 - 130,     # eo ankavia indrindra hoan'ny MIVERINA
@@ -237,8 +235,6 @@ def dessin_plateau(event=None):
 
 
 def retour_menu():
-    # nampiana : miantso ity fonction ity ny bouton MIVERINA
-    # manontany aloha raha tena tianao ny hiala @lalao eo am-pandehanana, mba tsy ho very tampoka
     confirmation = messagebox.askyesno(
         "Miverina any amin'ny menu",
         "Tena hialana ve ny lalao?\nHo very ny lalao eo am-pandehanana."
@@ -248,15 +244,13 @@ def retour_menu():
 
 
 def lalao_vaovao():
-    # nampiana : miantso ity fonction ity ny bouton VAOVAO
-    # manontany aloha raha tena tianao ny hanomboka lalao vaovao, mba tsy ho very tampoka ny lalao eo am-pandehanana
     confirmation = messagebox.askyesno(
         "Lalao vaovao",
         "Haverina avy amin'ny voaloany ?\nHo very ny lalao eo am-pandehanana."
     )
     if confirmation:
         nouvelle_partie()  # mamerina ny plateau sy ny etat rehetra amin'ny fiandohana
-        dessin_plateau()   # mamerina mandraikitra ny sary eo amin'ny canvas
+        dessin_plateau()   
 
 
 def lancer():
@@ -301,7 +295,7 @@ def splash():
     for widget in root.winfo_children():
         widget.destroy()
     root.configure(bg="black")  # corrigé "bllack" → "black"
-    label = tk.Label(root, text="KIALALAO MALAGASY :)", font=("Arial", 40, "bold"), fg="white", bg="black")  # corrigé "blod"
+    label = tk.Label(root, text="KILALAO MALAGASY :)", font=("Arial", 40, "bold"), fg="white", bg="black")  # corrigé "blod"
     label.place(relx=0.5, rely=0.5, anchor="center")
     root.after(2000, menu)
 
