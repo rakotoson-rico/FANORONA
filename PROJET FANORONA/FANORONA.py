@@ -37,6 +37,11 @@ image_fond_originale = None
 btn_apody = None  # nampiana : ny objet button APODY, tsy azo avadika isaky ny redessin
 btn_miverina = None
 btn_vaovao = None
+image_case = None #rafa mandeh game 
+image_case_jeu = None
+image_plateau_originale = None 
+image_plateau = None
+taille_plateau = None
 
 
 def dessin_pion(canvas, x, y, rayon, couleur, selectionne=False):
@@ -119,11 +124,32 @@ def clic_case(event):
 
 
 def dessin_plateau(event=None):
-    global positions, rayon_pions
+    global positions, rayon_pions,image_plateau ,taille_plateau
     canvas.delete("all")
 
     largeur = canvas.winfo_width()
     hauteur = canvas.winfo_height()
+
+    if largeur>1 and hauteur >1:
+        ratio = max(
+            largeur/image_plateau_originale.width,
+            hauteur/image_plateau_originale.height,
+            )
+        taille_vaovao = (
+            int(image_plateau_originale.width*ratio),
+            int(image_plateau_originale.height*ratio),
+        )
+
+    if taille_vaovao != taille_plateau:
+        image = image_plateau_originale.resize(taille_vaovao,Image.Resampling.LANCZOS)
+        image_plateau = ImageTk.PhotoImage(image)
+        taille_plateau = taille_vaovao 
+    canvas.create_image(largeur/2,
+                        hauteur/2,
+                        image=image_plateau,
+                        tags ="fond_plateau",
+                        )
+
 
     # nampiana : nampitomboina ny marge mba hampikelezana ny plateau (0.11->0.17 sy 0.13->0.19)
     marge_x = largeur * 0.17
@@ -137,7 +163,7 @@ def dessin_plateau(event=None):
         marge_y - 55,  # br sup
         marge_x + plateau_largeur + 55,  # bord droite du fond
         marge_y + plateau_hauteur + 55,  # inferieur
-        fill="#b87542",
+        fill="",
         outline="#482817",
         width=4,
     )
@@ -268,11 +294,16 @@ def lancer():
     for widget in root.winfo_children():
         widget.destroy()
     global canvas, btn_apody, btn_miverina, btn_vaovao
+    global image_plateau_originale,taille_plateau
+    image_plateau_originale = Image.open("grille.jpg")
+    taille_plateau = None
+
+
     canvas = tk.Canvas(root, bg="#8b522f", highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
     style = ttk.Style()
-    style.configure("Apody.TButton", font=("Times New Roman", 12, "bold"))
+    style.configure("Apody.TButton", font=("Arial", 18, "bold"))
     btn_apody = ttk.Button(
         canvas, text="APODY", style="Apody.TButton", command=annuler_dernier
     )
@@ -342,19 +373,19 @@ def menu():
         # nampiana : ny boutton_quitter (HIALA) dia mena, ny hafa dia mijanona amin'ny couleur_texte mahazatra
         couleur_bouton = "#c0392b" if tag == "boutton_quitter" else couleur_texte
         canvas.create_text(
-            0, 0, text=texte, font=("Arial", 20, "bold"), fill=couleur_bouton, tags=tag
+            0, 0, text=texte, font=("Arial", 25, "bold"), fill=couleur_bouton, tags=tag
         )
+    # canvas.create_text(
+    #     1, 1, text="◆", font=("Arial", 18), fill="#9b5d3d", tags="separateur1"
+    # )
     canvas.create_text(
-        0, 0, text="◆", font=("Arial", 12), fill="#9b5d3d", tags="separateur1"
+        0, 0, text="◆", font=("Arial", 18), fill="#9b5d3d", tags="separateur2"
     )
     canvas.create_text(
-        0, 0, text="◆", font=("Arial", 12), fill="#9b5d3d", tags="separateur2"
+        0, 0, text="◆", font=("Arial", 18), fill="#9b5d3d", tags="separateur2"
     )
     canvas.create_text(
-        0, 0, text="◆", font=("Arial", 12), fill="#9b5d3d", tags="separateur2"
-    )
-    canvas.create_text(
-        0, 0, text="◆", font=("Arial", 12), fill="#9b5d3d", tags="separateur3"
+        0, 0, text="◆", font=("Arial", 18), fill="#9b5d3d", tags="separateur3"
     )
 
     def redimensionner_menu(event=None):
