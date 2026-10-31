@@ -218,7 +218,8 @@ def page_precedente():
         dessiner_regles()                            # on redessine l'écran
     else:                                            # on est à la première page
         menu()                                       # retour au menu principal
-5. comment_jouer()
+5. com
+ment_jouer()
 python
 def comment_jouer():
     for widget in root.winfo_children():             # parcourt tout ce qui est affiché dans la fenêtre

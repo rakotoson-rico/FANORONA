@@ -37,11 +37,14 @@ image_fond_originale = None
 btn_apody = None  # nampiana : ny objet button APODY, tsy azo avadika isaky ny redessin
 btn_miverina = None
 btn_vaovao = None
-image_case = None #rafa mandeh game 
+image_case = None  # rafa mandeh game
 image_case_jeu = None
-image_plateau_originale = None 
+image_plateau_originale = None
 image_plateau = None
 taille_plateau = None
+
+
+page_regle = 0
 
 
 def dessin_pion(canvas, x, y, rayon, couleur, selectionne=False):
@@ -124,32 +127,32 @@ def clic_case(event):
 
 
 def dessin_plateau(event=None):
-    global positions, rayon_pions,image_plateau ,taille_plateau
+    global positions, rayon_pions, image_plateau, taille_plateau
     canvas.delete("all")
 
     largeur = canvas.winfo_width()
     hauteur = canvas.winfo_height()
 
-    if largeur>1 and hauteur >1:
+    if largeur > 1 and hauteur > 1:
         ratio = max(
-            largeur/image_plateau_originale.width,
-            hauteur/image_plateau_originale.height,
-            )
+            largeur / image_plateau_originale.width,
+            hauteur / image_plateau_originale.height,
+        )
         taille_vaovao = (
-            int(image_plateau_originale.width*ratio),
-            int(image_plateau_originale.height*ratio),
+            int(image_plateau_originale.width * ratio),
+            int(image_plateau_originale.height * ratio),
         )
 
     if taille_vaovao != taille_plateau:
-        image = image_plateau_originale.resize(taille_vaovao,Image.Resampling.LANCZOS)
+        image = image_plateau_originale.resize(taille_vaovao, Image.Resampling.LANCZOS)
         image_plateau = ImageTk.PhotoImage(image)
-        taille_plateau = taille_vaovao 
-    canvas.create_image(largeur/2,
-                        hauteur/2,
-                        image=image_plateau,
-                        tags ="fond_plateau",
-                        )
-
+        taille_plateau = taille_vaovao
+    canvas.create_image(
+        largeur / 2,
+        hauteur / 2,
+        image=image_plateau,
+        tags="fond_plateau",
+    )
 
     # nampiana : nampitomboina ny marge mba hampikelezana ny plateau (0.11->0.17 sy 0.13->0.19)
     marge_x = largeur * 0.17
@@ -183,7 +186,7 @@ def dessin_plateau(event=None):
         32,
         text=texte_tour,
         fill=couleur_tour,
-        anchor="n",  #milieu e droite 
+        anchor="n",  # milieu e droite
         font=("Arial", 38, "bold"),
     )
 
@@ -294,10 +297,9 @@ def lancer():
     for widget in root.winfo_children():
         widget.destroy()
     global canvas, btn_apody, btn_miverina, btn_vaovao
-    global image_plateau_originale,taille_plateau
+    global image_plateau_originale, taille_plateau
     image_plateau_originale = Image.open("grille.jpg")
     taille_plateau = None
-
 
     canvas = tk.Canvas(root, bg="#8b522f", highlightthickness=0)
     canvas.pack(fill="both", expand=True)
@@ -319,12 +321,15 @@ def lancer():
 
     style.configure(
         "Apody.TButton",
-        font=("Arial", 16, "bold"),background="#8b522f",foreground="#3b1f0a",borderwidth=2,
+        font=("Arial", 16, "bold"),
+        background="#8b522f",
+        foreground="#3b1f0a",
+        borderwidth=2,
         relief="solid",
-        bordercolor ="#3b2415",
-        focusthickness =0,
-        focuscolor ="#8b522f",
-        padding =6,
+        bordercolor="#3b2415",
+        focusthickness=0,
+        focuscolor="#8b522f",
+        padding=6,
     )
     style.map(
         "Apody.TButton",
@@ -428,84 +433,400 @@ def menu():
 # LOGIQUE__________________________________________________
 
 
+# fomba filalaova _____________
+def schema():
+    return min(
+        canvas.winfo_width() * 0.05, canvas.winfo_height() * 0.075
+    )  # 5% LARGEUR ET 7.5% HAUTEUR
+
+
+def schema_ligne(cx, cy, cases, pas, rayon, marque=None):
+    # ligne pont avec des pionps
+    n = len(cases)
+    x0 = cx - (n - 1) * pas / 2  # x ny point voloany
+    canvas.create_line(
+        x0, cy, x0 + (n - 1) * pas, cy, fill="#3a2a1a", width=2
+    )  # trait horizontale pour relier les point
+    for i in range(n):
+        x = x0 + i * pas
+        canvas.create_oval(x - 5, cy - 5, x + 5, cy + 5, fill="#3a2a1a", outline="")
+        if cases[i] is not None:
+            dessin_pion(canvas, x, cy, rayon, cases[i], i == marque)
+
+
+def schema_depart(cx, cy):
+    # mini plateau
+    pas = schema()
+    x0 = cx - 4 * pas
+    y0 = cy - 2 * pas
+
+    for ligne in range(5):
+        # trait horrisonrtale
+        canvas.create_line(
+            x0,
+            y0 + ligne * pas,
+            x0 + 8 * pas,
+            y0 + ligne * pas,
+            fill="#3a2a1a",
+            width=1,
+        )
+    for col in range(9):
+        canvas.create_line(
+            x0 + col * pas, y0, x0 + col * pas, y0 + 4 * pas, fill="#3a2a1a", width=1
+        )
+    for ligne in range(4):
+        for col in range(8):
+            if (col + ligne) % 2 == 0:
+                canvas.create_line(
+                    x0 + col * pas,
+                    y0 + ligne * pas,
+                    x0 + (col + 1) * pas,
+                    y0 + (ligne + 1) * pas,
+                    fill="#3a2a1a",
+                    width=1,
+                )
+                canvas.create_line(
+                    x0 + (col + 1) * pas,
+                    y0 + ligne * pas,
+                    x0 + col * pas,
+                    y0 + (ligne + 1) * pas,
+                    fill="#3a2a1a",
+                    width=1,
+                )
+    couleurs = ["noir", "noir", None, "blanc", "blanc"]
+    for ligne in range(5):
+        for col in range(9):
+            if couleurs[ligne] is not None:
+                dessin_pion(
+                    canvas,
+                    x0 + col * pas,
+                    y0 + ligne * pas,
+                    pas * 0.32,
+                    couleurs[ligne],
+                )
+
+
+def schema_mini_grille(cx, cy, pas, diagonales):
+    for i in range(3):
+        canvas.create_line(
+            cx - pas,
+            cy + (i - 1) * pas,
+            cx + pas,
+            cy + (i - 1) * pas,
+            fill="#3a2a1a",
+            width=2,
+        )
+        # vertcical gaut gauche  milieu  droite
+        canvas.create_line(
+            cx + (i - 1) * pas,
+            cy - pas,
+            cx + (i - 1) * pas,
+            cx + pas,
+            fill="#3a2a1a",
+            width=2,
+        )
+    if diagonales:
+        canvas.create_line(cx - pas, cy - pas, cx + pas, cy + pas, fill="#3a2a1a")
+        canvas.create_line(cx - pas, cy + pas, cx + pas, cy - pas, fill="#3a2a1a")
+
+    for dx in (-1, 0, 1):  # decalage hpor gcd
+        for dy in (-1, 0, 1):
+            if dx == 0 and dy == 0:
+                continue
+            if dx != 0 and dy != 0 and not diagonales:
+                continue
+            x = cx + dx * pas
+            y = cx + dy * pas
+            canvas.create_oval(
+                x - 9, y - 9, x + 9, y + 9, fill="#ffd400", outline="#ffffff"
+            )
+    dessin_pion(canvas, cx, cy, pas * 0.32, "blanc")
+
+
+def schema_mouvement(cx, cy):
+    # oage 2
+    pas = schema()
+    schema_mini_grille(cx - 2.5 * pas, cy, pas, True)  # gauche 8direction
+    schema_mini_grille(cx + 2.5 * pas, cy, pas, False)  # 4-droite 4 directions
+    # legende sous geille gaucxhe
+    canvas.create_text(
+        cx - 2.5 * pas,
+        cy + 1.8 * pas,
+        text="Teboka misy tsikika miampy : lalana 8",
+        font=("Gerogia", 14, "bold"),
+        fill="#7a3b1d",
+    )
+    # droite
+    canvas.create_text(
+        cx + 2.5 * pas,
+        cy + 1.8 * pas,
+        text="Teboka hafa : lalana 4",
+        font=("Georgie", 14, "bold"),
+        fill="#7a3b1d",
+    )
+
+
+def schema_capture(cx, cy):
+    pas = schema()
+    rayon = pas * 0.32  # taille pion
+    gauche = cx - 3 * pas
+    droite = cx + 3 * pas
+
+    canvas.create_text(
+        gauche,
+        cy - 2 * pas,
+        text="FANATONA",
+        font=("Georgia ", 16, "bold"),
+        fill="#7a3b1d",
+    )
+    canvas.create_text(
+        droite,
+        cy - 2 * pas,
+        text="FIHEMORANA",
+        font=("Georgia ", 16, "bold"),
+        fill="#7a3b1d",
+    )
+
+    # MANANTONA
+    schema_ligne(
+        gauche, cy - pas, ["blanc", None, "noir", "noir", None], pas, rayon, marque=0
+    )
+    canvas.create_text(
+        gauche, cy, text="▼", font=("Arial", 16), fill="#a5502b"
+    )  # flèche avant --> apres
+    schema_ligne(
+        gauche, cy + pas, [None, "blanc", None, None, None], pas, rayon, marque=1
+    )
+
+    # retrait
+    schema_ligne(
+        droite, cy - pas, ["noir", "noir", "blanc", None, None], pas, rayon, marque=2
+    )
+    canvas.create_text(droite, cy, text="▼", font=("Arial", 16), fill="#a5502b")
+    schema_ligne(
+        droite, cy + pas, [None, None, None, "blanc", None], pas, rayon, marque=3
+    )
+
+    # ___contenue
+
+
+regle = [
+    (
+        "1 . NY TANJONA",
+        "Samy manana vato 18 ny mpilalo roa , ary mifandimby mihetsika. \n\n"  # \nn ligne vide
+        "Tanjona : mamono ny vato rehetran'ny mpifaninana aminao."
+        "Izay lany vato no resy. ",
+        schema_depart,
+    ),
+    (
+        "2 . NY",
+        "Isaky ny handefa dia mandehana any amin'ny toerana malalaka , izany hoe mbola tsy misy vato."
+        "Fa kosa mifanila aminy , maraka ny tsipika.\n"
+        "Ny sasany amin 'ny teboka dia manana tsipika miampita ka afaka mihetsika amin'ny lalana 8.",
+        schema_mouvement,
+    ),
+    (
+        "3 . FOMBA FAMONOANA"
+        "Raha mitovy ny tsipika misy anao sy ny mpifanianan aminao , ka mihetsika ianao dia mamono ianao zay \n"
+        "FANANTONANA : mandroso amin'ny vato, mamono ny mifanitsy rehetra eo aloha. \n"
+        "FIHEMORANA : mihemotra miala ny vato , mamono ny vato mifanesy afaranao. \n"
+        "Raha samby izy roa dia mifidy ianao .",
+        schema_capture,
+    ),
+    (
+        "4. FISTIPIKA",
+        "• Raha misy azo vonoina dia tsy maintsy vonoina .\n\n"
+        "• Raha misy vato iaray avy mamono ka mbola misy hafa afaka vonoin'io vato io dia mbola mandeha io vato io ary mamono izay eo izay.\n\n"
+        "• Tsy mahazo miverina ny toerana efa nodiaviny tamin'io fihetsehana io ilay vato. \n\n"
+        "• Tsy mahazo manao lalana mitovy misesy. \n\n"
+        "MIARARY ANTSIKA HANKAFY NY FIALAMBOLY NAPETRAKAN' IREO RAZANTSIKA ;)",
+        None,
+    ),
+]
+
+
+def dessiner_regle(event=None):
+    canvas.delete("all")
+    # zones_boutons.clear()
+    largeur = max(canvas.winfo_width(), 1)
+    hauteur = max(canvas.winfo_height(), 1)
+
+    titre, texte, schema1 = regle[page_regle]
+    id_titre = canvas.create_text(
+        largeur / 2,
+        hauteur * 0.09,
+        text="FOMBA FILALAOVANA",
+        font=("Georgia", 34, "bold"),
+        fill="#f3e2b8",
+    )
+    x1, y1, x2, y2 = canvas.bbox(id_titre)
+    id_plaque = rectangle_arrondi(
+        x1 - 40,
+        y1 - 10,
+        x2 + 40,
+        y2 + 10,
+        18,
+        fill="#3b2415",
+        outline="#c9a24a",
+        width=3,
+    )
+    canvas.tag_lower(id_plaque, id_titre)
+    canvas.create_text(
+        largeur / 2,
+        hauteur * 0.20,
+        text=titre,
+        font=("Georgia", 28, "bold"),
+        fill="#7a3b1d",
+    )
+
+    largeur_texte = min(largeur * 0.7, 820)  # jamais plus de 820px
+    if schema1 is None:
+        canvas.create_text(
+            largeur / 2,
+            hauteur * 0.52,
+            text=texte,
+            anchor="center",
+            font=("Georgia", 18),
+            fill="#3b2415",
+            width=largeur_texte,
+            justify="left",
+        )
+    else:
+        canvas.create_text(
+            largeur / 2,
+            hauteur * 0.27,
+            text=texte,
+            anchor="n",
+            font=("Georgia", 17),
+            fill="#3b2415",
+            width=largeur_texte,
+            justify="center",
+        )
+        schema1(largeur / 2, hauteur * 0.65)  # appel fonction
+    for i in range(len(regle)):
+        x = largeur / 2 + (i - len(regle) - 1 / 2) * 28
+        y = hauteur * 0.845  # foncé
+        if i == page_regle:
+            canvas.create_oval(
+                x - 7, y - 7, x + 7, y + 7, fill="#7a3b1d", outline="#c9a24a", width=2
+            )
+        else:
+            canvas.create_oval(x - 5, y - 5, x + 5, y + 5, fill="#b08d57", outline="")
+
+    if page_regle == 0:
+        texte_gauche = "HIVOKA"
+    else:
+        texte_gauche = "MIVERINA"
+    if page_regle == len(regle) - 1:
+        texte_droite = "MANARAKA"
+    y_boutons = hauteur * 0.91
+
+    dessiner_bouton(
+        "regle_gauche", texte_gauche, largeur / 2 - 220, y_boutons, page_precedente
+    )
+    dessiner_bouton(
+        "regle_droite", texte_droite, largeur / 2 + 220, y_boutons, page_suivante
+    )
+
+
+def page_suivante():
+    global page_regle  # modification variable globals
+    if page_regle < len(regle) - 1:  # rah mbo misy afarany de
+        page_regle += 1
+        dessiner_regle()
+    else:
+        menu()
+
+
+def page_precedente():
+    global page_regle
+    if page_regle > 0:
+        page_regle -= 1
+        dessiner_regle()
+    else:
+        menu()
+
+
 def comment_jouer():
-    for widget in root.winfo_children():
+    for widget in root.winfo_children():  # partout qui est affiché
         widget.destroy()
-    global canvas, image_fond_originale
-    image_fond_originale = Image.open("menu2.png")
-    canvas = tk.Canvas(root, bg="#ecdfc8", highlightthickness=0)
-    canvas.pack(fill="both", expand=True)
+        global canvas, image_jeu_originale, taille_image_jeu, page_regle
+        canvas = tk.Canvas(
+            root, bg="#2b1a0e", highlightthickness=0
+        )  # bois sombre ans bordure
+        canvas.pack(fill="both", expand=True)  # occupe tout les fennttre
 
-    couleur_texte = "#3b2415"  # brun fonce, comme le titre FANORONA
-    couleur_accent = "#a5502b"  # terracotta, comme le "18"
+        image_jeu_originale = Image.open("menu2.png")
+        taille_image_jeu = None
+        page_regle = 0
+        canvas.bind("<Configure>", dessiner_regle)  # miova rah miova koa ny taille
 
-    regle_jeu = (
-        "FOMBA FILALAOVANA\n\n"
-        "Ny fanorona dia mitana toerana miavaka sy lehibe amin'ny maha malagasy ,izy io mantsy ny fialamboly ny Ntaolo fahiny ary mbola tohizana ankehitriny fa mety hoe hiova ny endriny"
-        "Ho jerena manokana eto moa izany dia ny fanorona 18, ny mampiavaka azy dia ny fomba filalaovana azy sy ny endriny (ahitana 5x9 tsipika)\n "
-        "Ahoana ara ny fomba filalaovana azy ? \n"
-        "Samby manana vato mihisa 18 ny mpilalao ary mifandimbidimby ny handefasa azy\n"
-        "Afaka mihetsika amin'ny ze malalaka ny vato rehetra \n"
-        "Raha misy tokony vonoina dia tsimaintsy vonoina \n"
-        "Ny fomba famonona dia tsotra, izay vato mifanitsy amin'ny ahetsikanao dia maty raha mihemotra ianao n amandroso\n"
-        "Mirary fazotona hoanao hilalao ny fialambolin drazantsika  :)"
-    )
 
-    canvas.create_text(
-        0,
-        0,
-        text=regle_jeu,
-        font=("Georgia", 14),
-        fill=couleur_texte,
-        width=650,
-        justify="left",
-        tags="regle_jeu",
-    )
+# def comment_jouer():
+#     for widget in root.winfo_children():
+#         widget.destroy()
+#     global canvas, image_fond_originale
+#     image_fond_originale = Image.open("menu2.png")
+#     canvas = tk.Canvas(root, bg="#ecdfc8", highlightthickness=0)
+#     canvas.pack(fill="both", expand=True)
 
-    # boutton retour
-    canvas.create_rectangle(
-        0, 0, 0, 0, fill=couleur_texte, outline="", tags="fond_retour"
-    )
-    canvas.create_text(
-        0,
-        0,
-        text=" MIVERINA ",
-        font=("Georgia", 14, "bold"),
-        fill=couleur_accent,
-        anchor="w",
-        tags="bouton_retour",
-    )
+#     couleur_texte = "#3b2415"  # brun fonce, comme le titre FANORONA
+#     couleur_accent = "#a5502b"  # terracotta, comme le "18"
 
-    def redimension(event=None):
-        largeur = max(canvas.winfo_width(), 1)
-        hauteur = max(canvas.winfo_height(), 1)
-        ratio = max(
-            largeur / image_fond_originale.width, hauteur / image_fond_originale.height
-        )
-        image = image_fond_originale.resize(
-            (
-                int(image_fond_originale.width * ratio),
-                int(image_fond_originale.height * ratio),
-            ),
-            Image.Resampling.LANCZOS,
-        )
-        global image_fond
-        image_fond = ImageTk.PhotoImage(image)
-        canvas.delete("fond")
-        canvas.create_image(largeur / 2, hauteur / 2, image=image_fond, tags="fond")
-        canvas.tag_lower("fond")
+#     canvas.create_text(
+#         0,
+#         0,
+#         font=("Georgia", 14),
+#         fill=couleur_texte,
+#         width=650,
+#         justify="left",
+#         tags="regle_jeu",
+#     )
 
-        # texte descendu, sous le titre / la ligne decorative de l'image
-        canvas.coords("regle_jeu", largeur / 2, hauteur * 0.68)
+#     # boutton retour
+#     canvas.create_rectangle(
+#         0, 0, 0, 0, fill=couleur_texte, outline="", tags="fond_retour"
+#     )
+#     canvas.create_text(
+#         0,
+#         0,
+#         text=" MIVERINA ",
+#         font=("Georgia", 14, "bold"),
+#         fill=couleur_accent,
+#         anchor="w",
+#         tags="bouton_retour",
+#     )
 
-        # boutton retour, en bas a gauche maintenant
-        canvas.coords("bouton_retour", 30, hauteur - 30)
-        canvas.coords("fond_retour", 10, hauteur - 48, 160, hauteur - 12)
-        canvas.tag_raise("bouton_retour")
+#     def redimension(event=None):
+#         largeur = max(canvas.winfo_width(), 1)
+#         hauteur = max(canvas.winfo_height(), 1)
+#         ratio = max(
+#             largeur / image_fond_originale.width, hauteur / image_fond_originale.height
+#         )
+#         image = image_fond_originale.resize(
+#             (
+#                 int(image_fond_originale.width * ratio),
+#                 int(image_fond_originale.height * ratio),
+#             ),
+#             Image.Resampling.LANCZOS,
+#         )
+#         global image_fond
+#         image_fond = ImageTk.PhotoImage(image)
+#         canvas.delete("fond")
+#         canvas.create_image(largeur / 2, hauteur / 2, image=image_fond, tags="fond")
+#         canvas.tag_lower("fond")
 
-    canvas.bind("<Configure>", redimension)
-    canvas.tag_bind("bouton_retour", "<Button-1>", lambda event: menu())
-    canvas.tag_bind("fond_retour", "<Button-1>", lambda event: menu())
+#         # texte descendu, sous le titre / la ligne decorative de l'image
+#         canvas.coords("regle_jeu", largeur / 2, hauteur * 0.68)
+
+#         # boutton retour, en bas a gauche maintenant
+#         canvas.coords("bouton_retour", 30, hauteur - 30)
+#         canvas.coords("fond_retour", 10, hauteur - 48, 160, hauteur - 12)
+#         canvas.tag_raise("bouton_retour")
+
+#     canvas.bind("<Configure>", redimension)
+#     canvas.tag_bind("bouton_retour", "<Button-1>", lambda event: menu())
+#     canvas.tag_bind("fond_retour", "<Button-1>", lambda event: menu())
 
 
 def sauvegarder_etat():
